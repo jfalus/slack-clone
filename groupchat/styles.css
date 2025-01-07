@@ -1,0 +1,127 @@
+body {
+    margin: 0; /* Remove margin from body */
+}
+.chat-container {
+    display: flex;
+    height: 100vh;
+}
+.sidebar {
+    width: 240px; /* Fixed width for the sidebar */
+    padding: 20px; /* Padding for the sidebar */
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Space between content and logout button */
+}
+.chat-area {
+    flex-grow: 1; /* Allow chat area to grow and fill available space */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+.messages {
+    flex-grow: 1; /* Allow messages area to grow */
+    overflow-y: auto;
+    margin-bottom: 10px; /* Space for editor */
+}
+.message {
+    margin: 10px 0;
+    padding: 10px; /* Add padding for better spacing */
+    border: 1px solid #ccc; /* Add a border */
+    border-radius: 4px; /* Rounded corners */
+    background-color: #f1f1f1; /* Light background color for messages */
+}
+.message-form {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #ccc;
+    box-sizing: border-box; /* Include padding and border in width */
+}
+#editor-container {
+    height: 100px;
+    margin-bottom: 10px;
+    width: 100%; /* Ensure the editor takes the full width of the form */
+    box-sizing: border-box; /* Include padding and border in width */
+}
+.ql-editor {
+    min-height: 100px;
+}
+.message-content {
+    margin-top: 5px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+.new-group-btn {
+    width: 100%;
+    padding: 8px;
+    margin: 10px 0;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.new-group-btn:hover {
+    background-color: #45a049;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+}
+.user-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+.user-list label {
+    display: block;
+    margin: 5px 0;
+}
+
+/* Title bar styles */
+.title-bar {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+/* Logout button styles */
+.logout-btn {
+    background-color: #f44336; /* Red background */
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    margin-top: auto; /* Push to the bottom */
+}
+
+.logout-btn:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Optional: Adjust the Quill editor's container */
+.ql-container {
+    width: 100%; /* Ensure the Quill container takes the full width */
+    box-sizing: border-box; /* Include padding and border in width */
+}

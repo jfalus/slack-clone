@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Chat - {{.SelectedGroupName}}</title>
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="/groupchat/styles.css"> <!-- Link to the CSS file -->
+    
+    <!-- Include jQuery, Select2, and jQuery UI CSS/JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <h3>Groups</h3>
+            <button onclick="showNewGroupForm()" class="new-group-btn">Create New Group</button>
+            <ul>
+                {{range .Groups}}
+                    <li>
+                        <a href="/groupchat?group={{.ID}}">{{.Name}}</a>
+                    </li>
+                {{end}}
+            </ul>
+            
+            <!-- New Group Form Dialog -->
+            <div id="newGroupDialog" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <h3>Create New Group</h3>
+                    <form action="/create-group" method="post">
+                        <input type="text" name="group_name" id="group_name" placeholder="Group Name" required>
+                        <div class="user-list">
+                            <h4>Add Members:</h4>
+                            <select name="members" id="members" multiple="multiple" style="width: 100%;">
+                                {{range .AllUsers}}
+                                    <option value="{{.}}">{{.}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <button type="submit">Create Group</button>
+                        <button type="button" onclick="hideNewGroupForm()">Cancel</button>
+                    </form>
+                </div>
+            </div>
+            
+            {{if .SelectedGroupID}}
+                <h3>Group Members</h3>
+                <ul>
+                    {{range .GroupMembers}}
+                        <li>{{.}}</li>
+                    {{else}}
+                        <li>Not a member of this group.</li>
+                    {{end}}
+                </ul>
+            {{end}}
+            
+            <button class="logout-btn" onclick="window.location.href='/logout'">Logout</button> <!-- Logout button -->
+        </div>
+        
+        <div class="chat-area">
+            <!-- Title Bar with Group Name -->
+            {{if .SelectedGroupName}}
+                <div class="title-bar">
+                    Group: {{.SelectedGroupName}}
+                </div>
+            {{end}}
+
+            <div class="messages">
+                {{range .Messages}}
+                    <div class="message">
+                        <strong>{{.Sender}}:</strong>
+                        <div class="message-content" data-message-content>{{.Content}}</div>
+                        <small>{{.Timestamp}}</small>
+                    </div>
+                {{end}}
+            </div>
+
+            {{if .SelectedGroupID}}
+                <form class="message-form" action="/send-group-message" method="post" id="messageForm">
+                    <input type="hidden" name="group_id" value="{{.SelectedGroupID}}">
+                    <input type="hidden" name="content" id="hiddenContent">
+                    <div id="editor-container"></div>
+                    <button type="submit" onclick="prepareSubmit(event)">Send</button>
+                </form>
+            {{end}}
+        </div>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="/groupchat/script.js"></script> <!-- Link to the JavaScript file -->
+    
+    {{if .Notification}}
+        <div class="notification">{{.Notification}}</div>
+    {{end}}
+
+    <script>
+        $(document).ready(function() {
+            $('#members').select2({
+                placeholder: "Select members",
+                allowClear: true
+            });
+        });
+    </script>
+</body>
+</html>
