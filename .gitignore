@@ -1,3 +1,5 @@
 *.db
 *.env
 /scrap
+
+slack_clone

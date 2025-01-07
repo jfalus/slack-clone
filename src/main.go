@@ -58,7 +58,7 @@ type DebugMessage struct {
 func loginPageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// Serve the HTML login page
-		http.ServeFile(w, r, "login.html")
+		http.ServeFile(w, r, "../static/login.html")
 	} else if r.Method == http.MethodPost {
 		// Handle login form submission
 		r.ParseForm()
@@ -87,7 +87,7 @@ func loginPageHandler(w http.ResponseWriter, r *http.Request) {
 func registerPageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		// Serve the HTML registration page
-		http.ServeFile(w, r, "register.html")
+		http.ServeFile(w, r, "../static/register.html")
 	} else if r.Method == http.MethodPost {
 		// Handle registration form submission
 		r.ParseForm()
@@ -308,7 +308,7 @@ func groupchatPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the template with the groups, messages, all users, and group members
-	tmpl, err := template.ParseFiles("groupchat/index.html")
+	tmpl, err := template.ParseFiles("../static/groupchat/index.html")
 	if err != nil {
 		fmt.Println("Error loading template:", err)
 		http.Error(w, "Error loading template", http.StatusInternalServerError)
@@ -510,8 +510,8 @@ func main() {
 	initDB()
 	defer db.Close()
 
-	// Serve static files (CSS and JS) from the groupchat folder
-	http.Handle("/groupchat/", http.StripPrefix("/groupchat/", http.FileServer(http.Dir("groupchat"))))
+	// Serve static files (CSS and JS) from the ../static/ folder
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("../static/"))))
 
 	// Route for root (/) redirects to groupchat page
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -3,7 +3,7 @@
 <head>
     <title>Group Chat - {{.SelectedGroupName}}</title>
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link rel="stylesheet" href="/groupchat/styles.css"> <!-- Link to the CSS file -->
+    <link rel="stylesheet" href="/static/groupchat/styles.css"> <!-- Link to the CSS file -->
     
     <!-- Include jQuery, Select2, and jQuery UI CSS/JS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
@@ -89,7 +89,7 @@
     </div>
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="/groupchat/script.js"></script> <!-- Link to the JavaScript file -->
+    <script src="/static/groupchat/script.js"></script> <!-- Link to the JavaScript file -->
     
     {{if .Notification}}
         <div class="notification">{{.Notification}}</div>
