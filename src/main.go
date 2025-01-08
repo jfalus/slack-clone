@@ -10,7 +10,6 @@ import (
 	"slices"
 
 	"github.com/gorilla/sessions"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -155,7 +154,7 @@ func groupchatPageHandler(w http.ResponseWriter, r *http.Request) {
 		err = db.QueryRow(`
 			SELECT COUNT(*) > 0 
 			FROM group_members 
-			WHERE user_id = ? AND group_id = ?`, userID, selectedGroupID).Scan(&isMember)
+			WHERE user_id = $1 AND group_id = $2`, userID, selectedGroupID).Scan(&isMember)
 		if err != nil {
 			fmt.Println("Error checking group membership:", err)
 			http.Error(w, "Error checking group membership", http.StatusInternalServerError)
@@ -177,7 +176,7 @@ func groupchatPageHandler(w http.ResponseWriter, r *http.Request) {
 		err = db.QueryRow(`
 			SELECT name 
 			FROM groups 
-			WHERE id = ?`, selectedGroupID).Scan(&groupName)
+			WHERE id = $1`, selectedGroupID).Scan(&groupName)
 		if err != nil {
 			fmt.Println("Error retrieving group name:", err)
 			http.Error(w, "Error retrieving group name", http.StatusInternalServerError)
@@ -190,7 +189,7 @@ func groupchatPageHandler(w http.ResponseWriter, r *http.Request) {
 		SELECT g.id, g.name 
 		FROM groups g
 		JOIN group_members gm ON g.id = gm.group_id
-		WHERE gm.user_id = ?
+		WHERE gm.user_id = $1
 		ORDER BY g.created_at DESC`, userID)
 	if err != nil {
 		fmt.Println("Error querying groups:", err)
@@ -376,7 +375,7 @@ func sendGroupMessageHandler(w http.ResponseWriter, r *http.Request) {
 	err = db.QueryRow(`
 		SELECT COUNT(*) > 0 
 		FROM group_members 
-		WHERE user_id = ? AND group_id = ?`, senderID, groupID).Scan(&isMember)
+		WHERE user_id = $1 AND group_id = $2`, senderID, groupID).Scan(&isMember)
 	if err != nil {
 		http.Error(w, "Error checking group membership", http.StatusInternalServerError)
 		return
@@ -392,7 +391,7 @@ func sendGroupMessageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Insert the message into the database
 	_, err = db.Exec(
-		"INSERT INTO messages (sender_id, group_id, content) VALUES (?, ?, ?)",
+		"INSERT INTO messages (sender_id, group_id, content) VALUES ($1, $2, $3)",
 		senderID, groupID, content)
 	if err != nil {
 		http.Error(w, "Error saving message: "+err.Error(), http.StatusInternalServerError)

@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq" // PostgreSQL driver
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,8 +17,21 @@ var db *sql.DB
 // Initialize the database connection and create the users and messages tables if they don't exist
 func initDB() {
 	var err error
-	// Open the SQLite database (if the file doesn't exist, it will be created)
-	db, err = sql.Open("sqlite3", "./go_login_system.db")
+
+	// Load environment variables from .env file
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	var databaseURL string
+
+	// Get the database connection string from the environment variable
+	databaseURL = os.Getenv("DATABASE_URL")
+	log.Println("databaseURL:", databaseURL)
+
+	// Open the database based on the type
+	db, err = sql.Open("postgres", databaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -26,12 +41,12 @@ func initDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Connected to the SQLite database!")
+	fmt.Println("Connected to the database!")
 
 	// Create users table
 	createUsersTableQuery := `
 	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		username TEXT UNIQUE NOT NULL,
 		password_hash TEXT NOT NULL
 	);`
@@ -43,9 +58,9 @@ func initDB() {
 	// Create groups table
 	createGroupsTableQuery := `
 	CREATE TABLE IF NOT EXISTS groups (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		name TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT NOW()
 	);`
 	_, err = db.Exec(createGroupsTableQuery)
 	if err != nil {
@@ -57,7 +72,7 @@ func initDB() {
 	CREATE TABLE IF NOT EXISTS group_members (
 		group_id INTEGER NOT NULL,
 		user_id INTEGER NOT NULL,
-		joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		joined_at TIMESTAMP DEFAULT NOW(),
 		PRIMARY KEY (group_id, user_id),
 		FOREIGN KEY (group_id) REFERENCES groups(id),
 		FOREIGN KEY (user_id) REFERENCES users(id)
@@ -70,11 +85,11 @@ func initDB() {
 	// Create messages table with group_id
 	createMessagesTableQuery := `
 	CREATE TABLE IF NOT EXISTS messages (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		sender_id INTEGER NOT NULL,
 		group_id INTEGER NOT NULL,
 		content TEXT NOT NULL,
-		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+		timestamp TIMESTAMP DEFAULT NOW(),
 		FOREIGN KEY (sender_id) REFERENCES users(id),
 		FOREIGN KEY (group_id) REFERENCES groups(id)
 	);`
@@ -86,12 +101,12 @@ func initDB() {
 	fmt.Println("Database tables are ready!")
 }
 
-// Function to validate user against the SQLite database
+// Function to validate user against the PostgreSQL database
 func validateUser(username, password string) bool {
 	var storedHash string
 
 	// Query the database for the user
-	err := db.QueryRow("SELECT password_hash FROM users WHERE username = ?", username).Scan(&storedHash)
+	err := db.QueryRow("SELECT password_hash FROM users WHERE username = $1", username).Scan(&storedHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// User not found
@@ -116,7 +131,7 @@ func validateUser(username, password string) bool {
 func registerUser(username, password string) error {
 	// Check if the username already exists
 	var existingUsername string
-	err := db.QueryRow("SELECT username FROM users WHERE username = ?", username).Scan(&existingUsername)
+	err := db.QueryRow("SELECT username FROM users WHERE username = $1", username).Scan(&existingUsername)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -131,7 +146,7 @@ func registerUser(username, password string) error {
 	}
 
 	// Insert the user into the database
-	_, err = db.Exec("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, string(passwordHash))
+	_, err = db.Exec("INSERT INTO users (username, password_hash) VALUES ($1, $2)", username, string(passwordHash))
 	if err != nil {
 		return err
 	}
@@ -142,7 +157,7 @@ func registerUser(username, password string) error {
 // Helper function to get user ID from username
 func getUserID(username string) (int, error) {
 	var id int
-	err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&id)
+	err := db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&id)
 	return id, err
 }
 
@@ -168,14 +183,14 @@ func getOrCreateChatGroup(groupName string, users ...string) (int, error) {
 			SELECT gm.group_id, COUNT(*) as member_count
 			FROM group_members gm
 			GROUP BY gm.group_id
-			HAVING member_count = ?
+			HAVING member_count = $1
 		)
 		SELECT gm.group_id
 		FROM group_members gm
 		JOIN GroupCounts gc ON gm.group_id = gc.group_id
 		WHERE gm.user_id IN (?` + strings.Repeat(",?", len(userIDs)-1) + `)
 		GROUP BY gm.group_id
-		HAVING COUNT(*) = ?`
+		HAVING COUNT(*) = $2`
 
 	queryArgs := make([]interface{}, 0, len(userIDs)+2)
 	queryArgs = append(queryArgs, len(userIDs)) // member_count
@@ -207,7 +222,7 @@ func getOrCreateChatGroup(groupName string, users ...string) (int, error) {
 
 	result, err := tx.Exec(`
 		INSERT INTO groups (name) 
-		VALUES (?)`,
+		VALUES ($1)`,
 		groupName)
 	if err != nil {
 		return 0, err
